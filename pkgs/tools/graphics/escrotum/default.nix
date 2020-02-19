@@ -1,19 +1,38 @@
-{ lib, fetchFromGitHub, buildPythonApplication
-, pygtk
-, numpy ? null
-}:
+{ lib, fetchFromGitHub, python3Packages , gtk3, gobject-introspection,
+  wrapGAppsHook , pygtk , numpy ? null, buildPythonApplication }:
 
-buildPythonApplication {
-  name = "escrotum-2019-06-10";
+python3Packages.buildPythonApplication rec {
+  pname = "escrotum";
+  version = "1.0.1";
 
   src = fetchFromGitHub {
     owner  = "Roger";
-    repo   = "escrotum";
-    rev    = "f6c300315cb4402e37f16b56aad2d206e24c5281";
-    sha256 = "0x7za74lkwn3v6j9j04ifgdwdlx9akh1izkw7vkkzj9ag9qjrzb0";
+    repo   = "${pname}";
+    rev = "${version}";
+    sha256 = "1kzsx5daprj811y88mmw0bmxdd1vgdiyk7q15fzs2cw9db9hsx08";
   };
 
-  propagatedBuildInputs = [ pygtk numpy ];
+  postPatch = ''
+    substituteInPlace ./setup.py \
+      --replace "'gobject'," "'PyGObject',"
+    substituteInPlace ./escrotum/util.py \
+      --replace "array.array (\"c\", pixels)" "array.array ('B', pixels)"
+  '';
+
+  buildInputs = [
+    gtk3
+    gobject-introspection
+  ];
+
+  nativeBuildInputs = [
+    wrapGAppsHook
+  ];
+
+  propagatedBuildInputs = with python3Packages; [
+    numpy
+    pygobject3
+    xcffib
+  ];
 
   outputs = [ "out" "man" ];
 
